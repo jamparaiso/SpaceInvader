@@ -17,8 +17,12 @@ public class Projectile : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
+        if (this.destroyed != null)
+        {
             //this method will trigger and delegate the event to other class that this is happening now
             this.destroyed.Invoke();
+        }
+
 
             Destroy(this.gameObject);
     }

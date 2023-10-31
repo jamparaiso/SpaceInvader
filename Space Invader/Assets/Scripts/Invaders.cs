@@ -1,15 +1,20 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class Invaders : MonoBehaviour
 {
+    [SerializeField] AudioSource invaderKilledSFX;
     public Invader[] prefabs;
+    public Projectile missilePrefab;
     public int rows = 5;
     public int columns = 11;
     public float spacing = 2.0f;
     //speed is evaluated based on how many invaders has been killed
     public AnimationCurve speed;
+    public float missleAttackRate = 2.0f;
 
     public int amountKilled {  get; private set; }
+    public int amountAlive => this.totalInvaders - this.amountKilled;
     public int totalInvaders => this.rows * this.columns;
     public float percentKilled => (float)this.amountKilled / (float)this.totalInvaders;
 
@@ -44,9 +49,9 @@ public class Invaders : MonoBehaviour
         }
     }
 
-    private void InvaderKilled()
+    private void Start()
     {
-        this.amountKilled++;
+        InvokeRepeating(nameof(MissleAttack),this.missleAttackRate, this.missleAttackRate);
     }
 
     private void Update()
@@ -79,7 +84,6 @@ public class Invaders : MonoBehaviour
                 }
             }
     }
-
     private void AdvanceRow()
     {
         //negates the position
@@ -89,5 +93,33 @@ public class Invaders : MonoBehaviour
         //moves the parent one unit downward
         position.y -= 1.0f;
         this.transform.position = position;
+    }
+
+    private void InvaderKilled()
+    {
+        invaderKilledSFX.Play();
+        this.amountKilled++;
+
+        if (this.amountKilled > this.totalInvaders)
+        {
+            SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+        }
+    }
+
+    private void MissleAttack()
+    {
+        foreach(Transform invader in this.transform)
+        {
+            if (!invader.gameObject.activeInHierarchy)
+            {
+                continue;
+            }
+            //the lower the number of invaders left the higher the chance of launching missle attack
+            if(Random.value < (1.0f / (float)this.amountAlive))
+            {
+                Instantiate(this.missilePrefab, invader.position, Quaternion.identity);
+                break; //break the loop so that only one missle attack can be launch
+            }
+        }
     }
 }
