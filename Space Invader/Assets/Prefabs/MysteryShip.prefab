@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 3052985114440572655}
   - component: {fileID: 7703342505936458473}
   - component: {fileID: 2921698411172313249}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: MysteryShip
   m_TagString: Untagged
   m_Icon: {fileID: 0}

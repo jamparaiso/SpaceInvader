@@ -6,7 +6,12 @@ public class Invaders : MonoBehaviour
     public int rows = 5;
     public int columns = 11;
     public float spacing = 2.0f;
-    public float speed = 1.0f;
+    //speed is evaluated based on how many invaders has been killed
+    public AnimationCurve speed;
+
+    public int amountKilled {  get; private set; }
+    public int totalInvaders => this.rows * this.columns;
+    public float percentKilled => (float)this.amountKilled / (float)this.totalInvaders;
 
     private Vector3 _direction = Vector2.right;
 
@@ -27,17 +32,26 @@ public class Invaders : MonoBehaviour
             {
                 //corresponds to the array declared above
                Invader invader = Instantiate(this.prefabs[row], this.transform);
-                Vector3 position = rowPosition;
-                position.x += col * spacing;
-                //set to localPosition so that it wont affect the parent position
-                invader.transform.localPosition = position;
+
+                //call back function
+               invader.killed += InvaderKilled;
+
+               Vector3 position = rowPosition;
+               position.x += col * spacing;
+               //set to localPosition so that it wont affect the parent position
+               invader.transform.localPosition = position;
             }
         }
     }
 
-    private void Update()
+    private void InvaderKilled()
     {
-            this.transform.position += _direction * this.speed * Time.deltaTime;
+        this.amountKilled++;
+    }
+
+    private void Update()
+    {   //speed is evaluated based on how many invaders has been killed
+        this.transform.position += _direction * this.speed.Evaluate(this.percentKilled) * Time.deltaTime;
 
             //get the edge of the screen
             Vector3 leftEdge = Camera.main.ViewportToWorldPoint(Vector3.zero);
@@ -64,11 +78,6 @@ public class Invaders : MonoBehaviour
                     AdvanceRow();
                 }
             }
-    }
-
-    private void MoveInvader() 
-    {
-    
     }
 
     private void AdvanceRow()
