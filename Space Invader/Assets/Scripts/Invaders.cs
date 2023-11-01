@@ -4,23 +4,36 @@ using UnityEngine.SceneManagement;
 public class Invaders : MonoBehaviour
 {
     [SerializeField] AudioSource invaderKilledSFX;
+    [Header("Invaders")]
     public Invader[] prefabs;
-    public Projectile missilePrefab;
-    public int rows = 5;
-    public int columns = 11;
-    public float spacing = 2.0f;
     //speed is evaluated based on how many invaders has been killed
     public AnimationCurve speed;
-    public float missleAttackRate = 2.0f;
+    public Vector3 direction { get; private set; } = Vector3.right;
+    public Vector3 initialPosition { get; private set; }
+
+    [Header("Grid")]
+    [SerializeField] int rows = 5;
+    [SerializeField] int columns = 11;
+    [SerializeField] float spacing = 2.0f;
+
+    [Header("Missles")]
+    [SerializeField] Projectile missilePrefab;
+    [SerializeField] float missleAttackRate = 2.0f;
 
     public int amountKilled {  get; private set; }
-    public int amountAlive => this.totalInvaders - this.amountKilled;
-    public int totalInvaders => this.rows * this.columns;
-    public float percentKilled => (float)this.amountKilled / (float)this.totalInvaders;
+    private int amountAlive => this.totalInvaders - this.amountKilled;
+    private int totalInvaders => this.rows * this.columns;
+    private float percentKilled => (float)this.amountKilled / (float)this.totalInvaders;
 
     private Vector3 _direction = Vector2.right;
 
     private void Awake()
+    {
+        initialPosition = transform.position;
+        GenerateInvaderGrid();
+    }
+
+    private void GenerateInvaderGrid()
     {
         //generate the rows first
         for (int row = 0; row < this.rows; row++)
@@ -28,25 +41,28 @@ public class Invaders : MonoBehaviour
 
             float width = spacing * (this.columns - 1);
             float height = spacing * (this.rows - 1);
-            Vector2 centering = new Vector2(-width / 2,-height / 2);
+
+            Vector2 centering = new Vector2(-width / 2, -height / 2);
             //position the sprite in the row / this uses row index of the loop
-            Vector3 rowPosition = new Vector3(centering.x,centering.y + (row * spacing) , 0.0f);
+            Vector3 rowPosition = new Vector3(centering.x, centering.y + (row * spacing), 0.0f);
 
             //then columns which instantiate a invader
-            for(int col = 0; col < this.columns; col++)
+            for (int col = 0; col < this.columns; col++)
             {
-                //corresponds to the array declared above
-               Invader invader = Instantiate(this.prefabs[row], this.transform);
+                //create a new invader and parent it to this transform
+                Invader invader = Instantiate(this.prefabs[row], this.transform);
 
                 //call back function
-               invader.killed += InvaderKilled;
+                invader.killed += InvaderKilled;
 
-               Vector3 position = rowPosition;
-               position.x += col * spacing;
-               //set to localPosition so that it wont affect the parent position
-               invader.transform.localPosition = position;
+                //calculate and set the position of the invader
+                Vector3 position = rowPosition;
+                position.x += col * spacing;
+                //set to localPosition so that it wont affect the parent position
+                invader.transform.localPosition = position;
             }
         }
+
     }
 
     private void Start()
@@ -86,13 +102,24 @@ public class Invaders : MonoBehaviour
     }
     private void AdvanceRow()
     {
-        //negates the position
+        //negates the position the invaders are moving
         _direction.x *= -1.0f;
 
+        //moves the parent down a row
         Vector3 position = this.transform.position;
-        //moves the parent one unit downward
         position.y -= 1.0f;
         this.transform.position = position;
+    }
+
+    public void ResetInvaders()
+    {
+        direction = Vector3.right;
+        transform.position = initialPosition;
+
+        foreach (Transform invader in transform)
+        {
+            invader.gameObject.SetActive(true);
+        }
     }
 
     private void InvaderKilled()
@@ -108,6 +135,14 @@ public class Invaders : MonoBehaviour
 
     private void MissleAttack()
     {
+        int aliveCount = GetAliveCount();
+
+        //no missles should spawn if there are no invaders
+        if (aliveCount == 0) 
+        {
+            return;
+        }
+
         foreach(Transform invader in this.transform)
         {
             if (!invader.gameObject.activeInHierarchy)
@@ -121,5 +156,18 @@ public class Invaders : MonoBehaviour
                 break; //break the loop so that only one missle attack can be launch
             }
         }
+    }
+
+    private int GetAliveCount()
+    {
+        int count = 0;
+        foreach(Transform invader in this.transform)
+        {
+            if (invader.gameObject.activeSelf)
+            {
+                count++;
+            }
+        }
+        return count;
     }
 }

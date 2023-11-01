@@ -2,15 +2,13 @@ using UnityEngine;
 
 public class Bunker : MonoBehaviour
 {
-    // Start is called before the first frame update
-    void Start()
+    private void Awake()
     {
-        
+        ResetBunker();
     }
 
-    // Update is called once per frame
-    void Update()
+    public void ResetBunker()
     {
-        
+        gameObject.SetActive(true);
     }
 }

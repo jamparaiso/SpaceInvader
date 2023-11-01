@@ -47,7 +47,6 @@ public class Player : MonoBehaviour
             shootSFX.Play();
             _laserActive = true;
         }
-
     }
 
     private void LaserDestroyed()
@@ -58,9 +57,10 @@ public class Player : MonoBehaviour
     private void OnTriggerEnter2D(Collider2D collision)
     {
         if (collision.gameObject.layer == LayerMask.NameToLayer("Invader") ||
-            collision.gameObject.layer == LayerMask.NameToLayer("Missle"))
+            collision.gameObject.layer == LayerMask.NameToLayer("Missile"))
         {
-            //player dies
+            //when player is killed the should not restart
+            GameManager.Instance.OnPlayerKilled(this);
         }
 
     }
