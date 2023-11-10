@@ -3,7 +3,6 @@ using UnityEngine.SceneManagement;
 
 public class Invaders : MonoBehaviour
 {
-    [SerializeField] AudioSource invaderKilledSFX;
     [Header("Invaders")]
     public Invader[] prefabs;
     //speed is evaluated based on how many invaders has been killed
@@ -20,11 +19,6 @@ public class Invaders : MonoBehaviour
     [SerializeField] Projectile missilePrefab;
     [SerializeField] float missleAttackRate = 2.0f;
 
-    public int amountKilled {  get; private set; }
-    private int amountAlive => this.totalInvaders - this.amountKilled;
-    private int totalInvaders => this.rows * this.columns;
-    private float percentKilled => (float)this.amountKilled / (float)this.totalInvaders;
-
     private Vector3 _direction = Vector2.right;
 
     private void Awake()
@@ -38,7 +32,6 @@ public class Invaders : MonoBehaviour
         //generate the rows first
         for (int row = 0; row < this.rows; row++)
         {
-
             float width = spacing * (this.columns - 1);
             float height = spacing * (this.rows - 1);
 
@@ -52,9 +45,6 @@ public class Invaders : MonoBehaviour
                 //create a new invader and parent it to this transform
                 Invader invader = Instantiate(this.prefabs[row], this.transform);
 
-                //call back function
-                invader.killed += InvaderKilled;
-
                 //calculate and set the position of the invader
                 Vector3 position = rowPosition;
                 position.x += col * spacing;
@@ -62,7 +52,6 @@ public class Invaders : MonoBehaviour
                 invader.transform.localPosition = position;
             }
         }
-
     }
 
     private void Start()
@@ -71,8 +60,11 @@ public class Invaders : MonoBehaviour
     }
 
     private void Update()
-    {   //speed is evaluated based on how many invaders has been killed
-        this.transform.position += _direction * this.speed.Evaluate(this.percentKilled) * Time.deltaTime;
+    {
+        float percentKilled = CalculatePercentKilled();
+
+        //speed is evaluated based on how many invaders has been killed
+        this.transform.position += _direction * this.speed.Evaluate(percentKilled) * Time.deltaTime;
 
             //get the edge of the screen
             Vector3 leftEdge = Camera.main.ViewportToWorldPoint(Vector3.zero);
@@ -100,6 +92,18 @@ public class Invaders : MonoBehaviour
                 }
             }
     }
+    private float CalculatePercentKilled()
+    {
+        float percentKilled;
+
+        int totalCount = rows * columns;
+        int amountAlive = GetAliveCount();
+        int amountKilled = totalCount - amountAlive;
+        percentKilled = (float)amountKilled / (float)totalCount;
+
+        return percentKilled;
+    }
+
     private void AdvanceRow()
     {
         //negates the position the invaders are moving
@@ -122,17 +126,6 @@ public class Invaders : MonoBehaviour
         }
     }
 
-    private void InvaderKilled()
-    {
-        invaderKilledSFX.Play();
-        this.amountKilled++;
-
-        if (this.amountKilled > this.totalInvaders)
-        {
-            SceneManager.LoadScene(SceneManager.GetActiveScene().name);
-        }
-    }
-
     private void MissleAttack()
     {
         int aliveCount = GetAliveCount();
@@ -150,7 +143,7 @@ public class Invaders : MonoBehaviour
                 continue;
             }
             //the lower the number of invaders left the higher the chance of launching missle attack
-            if(Random.value < (1.0f / (float)this.amountAlive))
+            if(Random.value < (1.0f / (float)aliveCount))
             {
                 Instantiate(this.missilePrefab, invader.position, Quaternion.identity);
                 break; //break the loop so that only one missle attack can be launch
@@ -158,7 +151,7 @@ public class Invaders : MonoBehaviour
         }
     }
 
-    private int GetAliveCount()
+    public int GetAliveCount()
     {
         int count = 0;
         foreach(Transform invader in this.transform)

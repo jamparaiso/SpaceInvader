@@ -5,9 +5,8 @@ public class Invader : MonoBehaviour
     //array of sprites to animate
     public Sprite[] animationSprites;
     //how often in cycles to next sprite
-    public float animationTime = 1.0f;
-
-    public System.Action killed; //callback method
+    [SerializeField] float animationTime = 1.0f;
+    public int score = 10;
 
     //access to which sprite wants to render
     private SpriteRenderer _spriteRenderer;
@@ -42,8 +41,10 @@ public class Invader : MonoBehaviour
         //makes sure that the layer that hit it is the laser layer
         if(collision.gameObject.layer == LayerMask.NameToLayer("Laser"))
         {
-            this.killed.Invoke(); //callback method
-            this.gameObject.SetActive(false);
+            GameManager.Instance.OnInvaderKilled(this);
+        }else if(collision.gameObject.layer == LayerMask.NameToLayer("Boundary"))
+        {
+            GameManager.Instance.OnBoundaryReached();
         }
     }
 }

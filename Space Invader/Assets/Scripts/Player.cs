@@ -7,7 +7,7 @@ public class Player : MonoBehaviour
     public Projectile laserPrefab;
     public float speed = 5.0f;
 
-    private bool _laserActive;
+    private Projectile laser;
 
     private void Update()
     {
@@ -39,19 +39,20 @@ public class Player : MonoBehaviour
     {
         //this is to avoid rapid firing of laser
         //checks if the is a active laser projectile
-        if(!_laserActive)
-        {
-            Projectile projectile = Instantiate(this.laserPrefab, this.transform.position, Quaternion.identity);
-            //set a method that will trigger when the .destroyed event has been activated
-            projectile.destroyed += LaserDestroyed;
-            shootSFX.Play();
-            _laserActive = true;
-        }
-    }
+        //if(!_laserActive)
+        //{
+        //    Projectile projectile = Instantiate(this.laserPrefab, this.transform.position, Quaternion.identity);
+        //    //set a method that will trigger when the .destroyed event has been activated
+        //    projectile.destroyed += LaserDestroyed;
+        //    shootSFX.Play();
+        //    _laserActive = true;
+        //}
 
-    private void LaserDestroyed()
-    {
-        _laserActive = false;
+        if(laser == null)
+        {
+            shootSFX.Play();
+            laser = Instantiate(laserPrefab, transform.position, Quaternion.identity);
+        }
     }
 
     private void OnTriggerEnter2D(Collider2D collision)
@@ -59,9 +60,7 @@ public class Player : MonoBehaviour
         if (collision.gameObject.layer == LayerMask.NameToLayer("Invader") ||
             collision.gameObject.layer == LayerMask.NameToLayer("Missile"))
         {
-            //when player is killed the should not restart
             GameManager.Instance.OnPlayerKilled(this);
         }
-
     }
 }

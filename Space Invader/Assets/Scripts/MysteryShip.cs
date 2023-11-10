@@ -5,6 +5,7 @@ public class MysteryShip : MonoBehaviour
     [SerializeField] float speed = 5f;
     [SerializeField] float cycleTime = 30f;
     [SerializeField] AudioSource mysteryShipSFX;
+    [SerializeField] Player player;
     public int score = 300;
 
     public Vector2 leftDestination {  get; private set; }
@@ -33,14 +34,14 @@ public class MysteryShip : MonoBehaviour
             return;
         }
 
-        if (direction == 1) 
-        {
-            MoveRight();
-        }
-        else //direction is -1
-        {
-            MoveLeft();
-        }
+            if (direction == 1)
+            {
+                MoveRight();
+            }
+            else //direction is -1
+            {
+                MoveLeft();
+            }
     }
 
     private void MoveRight()
@@ -65,6 +66,9 @@ public class MysteryShip : MonoBehaviour
 
     private void Spawn()
     {
+        spawned = true;
+        mysteryShipSFX.Play();
+
         direction *= -1; //flips the direction everytime the ship reached the edge of the screen
 
         if (direction == 1)
@@ -76,8 +80,6 @@ public class MysteryShip : MonoBehaviour
             transform.position = rightDestination;
         }
 
-        spawned = true;
-        mysteryShipSFX.Play();
     }
 
     private void Despawn()
@@ -97,12 +99,17 @@ public class MysteryShip : MonoBehaviour
         Invoke(nameof(Spawn), cycleTime);
     }
 
+    public void ResetPosition()
+    {
+        Despawn();
+    }
+
     private void OnTriggerEnter2D(Collider2D collision)
     {
         if (collision.gameObject.layer == LayerMask.NameToLayer("Laser"))
         {
             Despawn();
-            //report to game manager that player killed the ship
+            GameManager.Instance.OnMysteryShipKilled(this);
         }
     }
 

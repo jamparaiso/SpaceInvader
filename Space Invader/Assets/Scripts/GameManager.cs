@@ -1,14 +1,22 @@
 using UnityEngine;
+using UnityEngine.UI;
 
 public class GameManager : MonoBehaviour
 {
     //singleton pattern
     public static GameManager Instance {  get; private set; }
 
-    [SerializeField] AudioSource deathSFX;
+    [SerializeField] AudioSource playerKilledSFX;
+    [SerializeField] AudioSource invaderKilledSFX;
+    [SerializeField] Text scoreText;
+    [SerializeField] Text livesText;
+    [SerializeField] Text gameOverText;
+    [SerializeField] Text tryAgainText;
+
 
     private Player player;
     private Invaders invaders;
+    private MysteryShip mysteryShip;
     private Bunker[] bunkers;
 
     public int score {  get; private set; }
@@ -31,9 +39,32 @@ public class GameManager : MonoBehaviour
     {
         player = FindObjectOfType<Player>();
         invaders = FindObjectOfType<Invaders>();
+        mysteryShip = FindObjectOfType<MysteryShip>();
         bunkers = FindObjectsOfType<Bunker>();
 
+        NewGame();
+
+    }
+
+    private void Update()
+    {
+       if (lives <= 0 && Input.GetKeyDown(KeyCode.Return))
+        {
+           NewGame();
+         }
+
+    }
+
+    private void NewGame()
+    {
+        gameOverText.gameObject.SetActive(false);
+        tryAgainText.gameObject.SetActive(false);
+
         SetLives(3);
+        SetScore(0);
+        NewRound();
+
+
     }
 
     private void NewRound()
@@ -41,10 +72,16 @@ public class GameManager : MonoBehaviour
         invaders.ResetInvaders();
         invaders.gameObject.SetActive(true);
 
+        mysteryShip.gameObject.SetActive(true);
+        mysteryShip.ResetPosition();
+
         for (int i = 0; i < bunkers.Length; i++)
         {
+            Debug.Log(bunkers.Length);
             bunkers[i].ResetBunker();
         }
+
+
         Respawn();
     }
 
@@ -58,19 +95,22 @@ public class GameManager : MonoBehaviour
 
     private void GameOver()
     {
-        //game over
+        invaders.gameObject.SetActive(false);
+        mysteryShip.gameObject.SetActive(false);
+
+        gameOverText.gameObject.SetActive(true);
+        tryAgainText.gameObject.SetActive(true);
     }
 
     private void SetLives(int lives)
     {
         this.lives = Mathf.Max(lives,0);
+        livesText.text = lives.ToString();
     }
 
     public void OnPlayerKilled(Player player)
     {
-        deathSFX.Play();
-
-        //when player is killed the should not restart
+        playerKilledSFX.Play();
         SetLives(lives - 1);
         player.gameObject.SetActive(false);
 
@@ -80,6 +120,39 @@ public class GameManager : MonoBehaviour
         }else
         {
             GameOver();
+        }
+    }
+
+    private void SetScore(int score)
+    {
+        this.score = score;
+        scoreText.text = score.ToString();
+    }
+
+
+    public void OnInvaderKilled(Invader invader) 
+    {
+        invaderKilledSFX.Play();
+        invader.gameObject.SetActive(false);
+
+        SetScore(score + invader.score);
+
+        if(invaders.GetAliveCount() == 0)
+        {
+            NewRound();
+        }
+    }
+    public void OnMysteryShipKilled(MysteryShip mysteryShip)
+    {
+        SetScore(score + mysteryShip.score);
+    }
+
+    public void OnBoundaryReached()
+    {
+        if (invaders.gameObject.activeSelf)
+        {
+            invaders.gameObject.SetActive(false);
+            OnPlayerKilled(player);
         }
     }
 }
